@@ -1,0 +1,106 @@
+#Load data
+import pandas as pd
+
+df=pd.read_csv("rain-agriculture.csv")
+print(df)
+#preprocessing
+df.info()
+df.describe
+df.isnull().sum()
+df.isna().sum()
+df.columns = df.columns.str.strip()
+display(df.columns)
+df.drop_duplicates(inplace=True)
+df.dropna(inplace=True)
+df.isnull().sum()
+df.isna().sum()
+
+#heatmap
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+numerical_df = df.select_dtypes(include=['number'])
+correlation_matrix = numerical_df.corr()
+print("Correlation Matrix:")
+print(correlation_matrix)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Heatmap")
+plt.show()
+
+#correlation
+from scipy.stats import pearsonr
+
+correlation_coefficient, p_value = pearsonr(df['RICE PRODUCTION (1000 tons)'], df['RICE YIELD (Kg per ha)'])
+print(f"Pearson Correlation Coefficient: {correlation_coefficient}")
+print(f"P-value: {p_value}")
+
+#Pipeline
+import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.linear_model import Ridge
+
+X = df[['RICE YIELD (Kg per ha)']]  # or add more features here
+y = df[['RICE PRODUCTION (1000 tons)']]
+
+# Create pipeline: PolynomialFeatures + StandardScaler + Ridge
+model = Pipeline([
+    ('scaler', StandardScaler()),
+    ('linear_regression', LinearRegression())
+])
+
+# Fit the model
+model.fit(X, y)
+
+#Train,Test,MSE,Rsquare and plot
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load data
+df = pd.read_csv("rain-agriculture.csv")
+df.dropna(inplace=True)
+
+# Define features and target
+X = df[['RICE YIELD (Kg per ha)']]  # or add more features here
+y = df[['RICE PRODUCTION (1000 tons)']]
+
+# Scale target between 0 and 1
+scaler = MinMaxScaler()
+y_scaled = scaler.fit_transform(y)
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y_scaled, test_size=0.2, random_state=42)
+
+# Train model on scaled target
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predict scaled target
+y_pred = model.predict(X_test)
+
+# Calculate MSE and R2 on scaled target
+mse_scaled = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error on scaled target: {mse_scaled:.4f}")
+print(f"R-squared on scaled target: {r2:.4f}")
+
+# Inverse transform predictions and actuals for plotting
+y_test_original = scaler.inverse_transform(y_test)
+y_pred_original = scaler.inverse_transform(y_pred)
+
+# Plotting the linear fit with confidence interval
+plt.figure(figsize=(10, 6))
+sns.regplot(x=X_test['RICE YIELD (Kg per ha)'], y=y_test, scatter_kws={'color': 'green', 'label': 'Actual Production'}, line_kws={'color': 'red', 'label': 'Linear Fit'})
+plt.xlabel('RICE YIELD (Kg per ha)')
+plt.ylabel('PREDICTED RICE PRODUCTION ')
+plt.title('multiple Linear Regression Fit')
+plt.legend()
+plt.show()
