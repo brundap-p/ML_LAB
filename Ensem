@@ -1,0 +1,46 @@
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import BaggingClassifier, RandomForestClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+
+data = load_digits()
+X, y = data.data, data.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+print(data)
+
+# 1. Bagging
+bagging = BaggingClassifier(estimator=DecisionTreeClassifier(),
+                            n_estimators=10, random_state=42)
+bagging.fit(X_train, y_train)
+bagging_acc = accuracy_score(y_test, bagging.predict(X_test))
+
+# 2. Random Forest
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)
+rf_acc = accuracy_score(y_test, rf.predict(X_test))
+
+# 3. AdaBoost
+boost = AdaBoostClassifier(n_estimators=50, random_state=42)
+boost.fit(X_train, y_train)
+boost_acc = accuracy_score(y_test, boost.predict(X_test))
+
+# Printing Accuracy
+print("\nAccuracy Comparison: (digits data)")
+print(f"Bagging Accuracy       : {bagging_acc:.4f}")
+print(f"Random Forest Accuracy : {rf_acc:.4f}")
+print(f"AdaBoost Accuracy      : {boost_acc:.4f}")
+
+# Plotting accuracy
+models = ['Bagging', 'Random Forest', 'AdaBoost']
+accuracies = [bagging_acc, rf_acc, boost_acc]
+
+plt.figure(figsize=(8, 4))
+plt.bar(models, accuracies, color=['skyblue', 'forestgreen', 'salmon'])
+plt.ylim(0.7, 1.05)
+plt.title("Model Accuracy Comparison")
+plt.ylabel("Accuracy")
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
