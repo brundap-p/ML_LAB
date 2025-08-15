@@ -1,0 +1,89 @@
+#Load data 
+import pandas as pd
+df = pd.read_csv("vivophonedata.csv")
+print(df)
+
+#Preprocessing
+df.info()
+df.describe()
+df.isna().sum()
+df.isnull().sum()
+
+#heatmap
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+correlation_matrix = df.corr()
+print("Correlation Matrix:")
+print(correlation_matrix)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Heatmap")
+plt.show()
+
+#correlation coefficient
+from scipy.stats import pearsonr
+
+correlation_coefficient, p_value = pearsonr(df['Battery_Power'], df['Price'])
+print(f"Pearson Correlation Coefficient: {correlation_coefficient}")
+print(f"P-value: {p_value}")
+
+#pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+
+y = df[['Price']]
+X = df[['RAM']]
+
+model_pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('linear_regression', LinearRegression())
+])
+
+model_pipeline.fit(X, y)
+
+#Train,Test,mse,Rsquare and linear regression plot
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+
+# Scale target variable Price between 0 and 1
+scaler = MinMaxScaler()
+y = df[['Price']]
+y_scaled = scaler.fit_transform(y)
+
+X = df[['RAM']]
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y_scaled, test_size=0.2, random_state=42)
+
+# Train linear regression on scaled target
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Calculate metrics on scaled target
+mse_scaled = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error on scaled Price: {mse_scaled:.4f}")
+print(f"R-squared on scaled Price: {r2:.4f}")
+
+# Inverse transform predictions and true values for plotting
+y_test_original = scaler.inverse_transform(y_test)
+y_pred_original = scaler.inverse_transform(y_pred)
+
+plt.scatter(X_test, y_test_original, color='blue', label='Actual Prices')
+plt.plot(X_test, y_pred_original, color='red', linewidth=2, label='Linear Fit')
+plt.xlabel('RAM')
+plt.ylabel('Price')
+plt.title('simple Linear Regression Fit ')
+plt.legend()
+plt.show()
