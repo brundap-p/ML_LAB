@@ -1,0 +1,108 @@
+#Load data
+import pandas as pd
+
+df=pd.read_csv("cokedrinkdata.csv")
+print(df)
+
+#basic analysis
+df.info
+df.head()
+df.tail()
+df.describe()
+df.isnull().sum()
+df.isna().sum()
+df.columns = df.columns.str.strip()
+display(df.columns)
+
+#heatmap
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+numerical_df = df.select_dtypes(include=['number'])
+correlation_matrix = numerical_df.corr()
+print("Correlation Matrix:")
+print(correlation_matrix)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Heatmap")
+plt.show()
+
+#pearsons correlation
+from scipy.stats import pearsonr
+
+correlation_coefficient, p_value = pearsonr(df['Temperature'], df['Revenue'])
+print(f"Pearson Correlation Coefficient: {correlation_coefficient}")
+print(f"P-value: {p_value}")
+
+from sklearn.preprocessing import PolynomialFeatures
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import pandas as pd
+import statsmodels.api as sm
+
+# Recreate polynomial features manually for VIF
+poly = PolynomialFeatures(degree=2, include_bias=False)
+X_poly = poly.fit_transform(df[['Temperature']])
+
+# Create DataFrame with feature names
+X_poly_df = pd.DataFrame(X_poly, columns=poly.get_feature_names_out(['Temperature']))
+
+# Calculate VIF
+vif_data = pd.DataFrame()
+vif_data['Feature'] = X_poly_df.columns
+vif_data['VIF'] = [variance_inflation_factor(X_poly_df.values, i) for i in range(X_poly_df.shape[1])]
+
+print(vif_data)
+
+#pipeline
+import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.linear_model import Ridge
+
+X = df[['Temperature']]
+y = df['Revenue']
+
+# Create pipeline: PolynomialFeatures + StandardScaler + Ridge
+model = Pipeline([
+    ('poly', PolynomialFeatures(degree=2, include_bias=False)),
+    ('scaler', StandardScaler()),
+    ('ridge', Ridge(alpha=1.0))
+])
+
+# Fit the model
+model.fit(X, y)
+
+#mse and r square
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Predict using the trained pipeline model
+y_pred = model.predict(X)
+
+# Calculate Mean Squared Error (MSE) and R-squared (R²)
+mse = mean_squared_error(y, y_pred)
+r2 = r2_score(y, y_pred)
+
+print(f"Mean Squared Error (MSE): {mse:.4f}")
+print(f"R-squared (R²): {r2:.4f}")
+
+#plot
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate smooth range of X values for plotting
+x_plot = np.linspace(df['Temperature'].min(), df['Temperature'].max(), 200).reshape(-1, 1)
+
+# Predict using the pipeline (automatically applies poly & scaling)
+y_plot = model.predict(x_plot)
+
+# Plot actual points and the polynomial curve
+plt.figure(figsize=(8, 6))
+plt.scatter(df['Temperature'], df['Revenue'], color='blue', alpha=0.6, label='Actual Data')
+plt.plot(x_plot, y_plot, color='red', linewidth=2, label='Polynomial Fit (degree=2)')
+plt.xlabel('Temperature')
+plt.ylabel('Revenue')
+plt.title('Polynomial Regression Curve')
+plt.legend()
+plt.grid(True)
+plt.show()
