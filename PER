@@ -1,0 +1,63 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import Perceptron
+from sklearn.neural_network import MLPClassifier
+
+print(load_digits())
+
+X, y = load_digits(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+#### Single-Layer Perceptron #####
+perceptron = Perceptron(max_iter=1000, eta0=0.1, random_state=42)
+perceptron.fit(X_train, y_train)
+single_acc = accuracy_score(y_test, perceptron.predict(X_test))
+
+#### Multi-Layer Perceptron with different activation functions #######
+activations = ['relu', 'tanh', 'logistic']
+mlp_results = {}
+
+for act in activations:
+    mlp = MLPClassifier(hidden_layer_sizes=(10,), activation=act,
+                        solver='sgd', learning_rate_init=0.01,
+                        max_iter=300, random_state=42)
+    mlp.fit(X_train, y_train)
+    acc = accuracy_score(y_test, mlp.predict(X_test))
+    mlp_results[act] = {"accuracy": acc, "loss": mlp.loss_curve_}
+
+##### Tuned MLP #####
+tuned_mlp = MLPClassifier(hidden_layer_sizes=(20, 10), activation='relu',
+                          solver='adam', learning_rate_init=0.005,
+                          alpha=0.001, max_iter=300, batch_size=16,
+                          random_state=42)
+tuned_mlp.fit(X_train, y_train)
+tuned_acc = accuracy_score(y_test, tuned_mlp.predict(X_test))
+tuned_loss = tuned_mlp.loss_curve_
+
+plt.figure(figsize=(14, 6))
+
+plt.subplot(1, 2, 1)
+for act in activations:
+    plt.plot(mlp_results[act]["loss"], label=f'{act}')
+plt.plot(tuned_loss, label="Tuned MLP", linestyle='--', color='black')
+plt.title("Loss Curves (Gradient Descent + Backpropagation)")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+plt.grid(True)
+
+#### Accuracy ########
+plt.subplot(1, 2, 2)
+labels = ['Single Layer'] + [f'MLP ({act})' for act in activations] + ['Tuned MLP']
+accuracies = [single_acc] + [mlp_results[a]["accuracy"] for a in activations] + [tuned_acc]
+plt.bar(labels, accuracies, color='skyblue')
+plt.xticks(rotation=45)
+plt.ylim(0, 1.05)
+plt.ylabel("Accuracy")
+plt.title("Model Accuracy Comparison")
+
+plt.tight_layout()
+plt.show()
