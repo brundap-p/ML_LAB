@@ -1,0 +1,91 @@
+#load data
+import pandas as pd
+data=pd..read_csv("brca.csv")
+print(data)
+
+#data frame
+df=pd.DataFrame(data)
+print(df)
+
+#preprocessing
+df.info()
+df.isna().sum()
+df.isnull().sum()
+df.describe
+df.duplicated().sum()
+
+#heat map
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+
+# Encode target 'y' (B=0, M=1)
+le = LabelEncoder()
+df['y'] = le.fit_transform(df['y'])
+
+# 1. Heatmap of correlation (using any 4 numerical columns)
+selected_cols = ['x.radius_mean', 'x.texture_mean', 'x.area_mean', 'x.perimeter_mean']
+plt.figure(figsize=(8, 6))
+sns.heatmap(df[selected_cols].corr(), cmap='Blues', annot=True)
+plt.title("Correlation Heatmap (4 features)")
+plt.show()
+
+#accuracy
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+# Separate features (X) and target (y)
+X = df.drop(['Unnamed: 0', 'y'], axis=1)
+y = df['y']
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 10-fold cross-validation
+clf = RandomForestClassifier(random_state=42)
+scores = cross_val_score(clf, X, y, cv=10, scoring='accuracy')
+
+print("Cross-Validation Accuracy Scores:", scores)
+print(f"Average CV Accuracy: {scores.mean():.4f}")
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Check the distribution of the target variable 'y'
+print(df['y'].value_counts())
+
+from imblearn.over_sampling import SMOTE
+
+# Separate features (X) and target (y)
+X = df.drop(['Unnamed: 0', 'y'], axis=1)
+y = df['y']
+
+# Apply SMOTE to balance the dataset
+smote = SMOTE(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X, y)
+
+# Check the new distribution of the target variable
+print("Resampled class distribution:")
+print(y_resampled.value_counts())
+
+#train and test accuracy
+from sklearn.metrics import accuracy_score
+
+# Train the classifier
+clf = RandomForestClassifier(random_state=42)
+clf.fit(X_train, y_train)
+
+# Predict
+y_train_pred = clf.predict(X_train)
+y_test_pred = clf.predict(X_test)
+
+# Accuracy
+train_acc = accuracy_score(y_train, y_train_pred)
+test_acc = accuracy_score(y_test, y_test_pred)
+
+print(f"Train Accuracy: {train_acc:.4f}")
+print(f"Test Accuracy: {test_acc:.4f}")
