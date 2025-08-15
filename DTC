@@ -1,0 +1,172 @@
+import pandas as pd
+
+# Load the UCI Heart Disease dataset 
+data = pd.read_csv('/content/heart_disease_uci.csv')	
+print(data)
+
+df=pd.DataFrame(data)
+print(df)
+
+df.head()
+df.tail()
+df.isna().sum()
+df.isnull().sum()
+df.drop_duplicates()
+#cleaning data
+df=df.dropna()
+#after cleaning data na and null values
+df.isna().sum()
+df.isnull().sum()
+
+#outliers
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set style
+sns.set(style="whitegrid")
+
+# Plot boxplots for 'trestbps' and 'chol'
+plt.figure(figsize=(10, 5))
+
+# Boxplot for 'trestbps'
+plt.subplot(1, 2, 1)
+sns.boxplot(y=data['trestbps'], color='skyblue')
+plt.title('Boxplot of trestbps')
+plt.show()
+
+#IQR
+# Copy the original data
+df_clean = data.copy()
+
+# Define the columns to clean
+columns_to_check = ['trestbps']
+
+for col in columns_to_check:
+    Q1 = df_clean[col].quantile(0.25)
+    Q3 = df_clean[col].quantile(0.75)
+    IQR = Q3 - Q1
+
+    # Define bounds
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    # Filter out outliers
+    df_clean = df_clean[(df_clean[col] >= lower_bound) & (df_clean[col] <= upper_bound)]
+
+# Show new shape after removing outliers
+print(f"Original data shape: {data.shape}")
+print(f"Data shape after removing outliers: {df_clean.shape}")
+
+#after removing outliers
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set style
+sns.set(style="whitegrid")
+
+# Plot boxplots for cleaned data
+plt.figure(figsize=(10, 5))
+
+# Boxplot for 'trestbps'
+plt.subplot(1, 2, 1)
+sns.boxplot(y=df_clean['trestbps'], color='skyblue')
+plt.title('Boxplot of trestbps (Cleaned)')
+
+plt.tight_layout()
+plt.show()
+
+#clean columns
+print(df_clean.columns)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Copy and convert booleans to integers
+df_numeric = df.copy()
+df_numeric['fbs'] = df_numeric['fbs'].astype(int)
+df_numeric['exang'] = df_numeric['exang'].astype(int)
+
+# Drop non-numeric or ID/categorical columns
+df_corr = df_numeric.drop(columns=['id', 'sex', 'dataset', 'cp', 'restecg', 'slope', 'thal'])
+
+# Compute correlation matrix
+corr = df_corr.corr()
+
+# Plot heatmap
+plt.figure(figsize=(10, 6))
+sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Heatmap")
+plt.show()
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+disp.plot(cmap='Blues')
+plt.title("Confusion Matrix")
+plt.show()
+
+#checking data balance 
+df_clean['target'].value_counts()
+
+from sklearn.tree import plot_tree, DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+# Prepare data
+df_clean['target'] = df_clean['num'].apply(lambda x: 1 if x > 0 else 0)
+X = pd.get_dummies(df_clean.drop([ 'num','target'], axis=1))
+y = df_clean['target']
+
+# Train-test split (80% train like your sample)
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.2, random_state=42)
+
+# Train model
+model = DecisionTreeClassifier(criterion="gini", random_state=42)
+model.fit(X_train, y_train)
+
+# Plot tree
+plt.figure(figsize=(9, 10))
+plot_tree(model, filled=True)
+plt.title("Original Decision Tree")
+plt.show()
+
+# Accuracy before pruning
+print("Accuracy before pruning:", model.score(X_test, y_test))
+
+# Pre-pruned decision tree
+model = DecisionTreeClassifier(
+    criterion="gini",
+    max_depth=3,               # limit tree depth
+    min_samples_split=5,       # min samples to split a node
+    min_samples_leaf=3,        # min samples required at a leaf node
+    random_state=42
+)
+model.fit(X_train, y_train)
+
+# Plot the pruned tree
+plt.figure(figsize=(12, 6))
+plot_tree(model, filled=True, feature_names=X.columns, class_names=['No Disease', 'Disease'], rounded=True)
+plt.title("Pre-Pruned Decision Tree")
+plt.show()
+
+# Accuracy after pre-pruning
+print("Accuracy after pre-pruning:", model.score(X_test, y_test))
+# Pruning
+path = DecisionTreeClassifier().cost_complexity_pruning_path(X_train, y_train)
+alphas = path.ccp_alphas
+models = [DecisionTreeClassifier(ccp_alpha=a).fit(X_train, y_train) for a in alphas]
+scores = [m.score(X_test, y_test) for m in models]
+
+# Best pruned model (also limit depth to shrink tree)
+best = DecisionTreeClassifier(ccp_alpha=alphas[scores.index(max(scores))], max_depth=3)
+best.fit(X_train, y_train)
+
+# Plot
+plt.figure(figsize=(10, 5))
+plot_tree(best, filled=True, feature_names=X.columns, class_names=['No', 'Yes'])
+plt.title("Pruned & Depth-Limited Tree")
+plt.show()
+
+# Accuracy
+print("Accuracy after pruning:", best.score(X_test, y_test))
