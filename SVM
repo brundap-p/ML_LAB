@@ -1,0 +1,178 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix
+
+# import the dataset
+import pandas as pd
+df = pd.read_csv("/content/data.csv")
+df.head()
+df.info()
+
+# Drop columns 'Unnamed: 32' and 'id' from the DataFrame
+df.drop(['Unnamed: 32', 'id'], axis=1, inplace=True)
+df.info()
+
+# check for nan values
+df.isna().sum()
+
+# check for duplicate values
+df.duplicated().sum()
+# change the target variable
+df['diagnosis'] = df['diagnosis'].map({'M':1, 'B':0})
+df.head()
+
+# Features and labels
+X = df.drop('diagnosis', axis=1)
+y = df['diagnosis']
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+print("X_train shape:", X_train.shape)
+print("X_test shape:", X_test.shape)
+print("y_train shape:", y_train.shape)
+print("y_test shape:", y_test.shape)
+
+# Standardize features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Define SVM model
+model = SVC(kernel='linear')
+model.fit(X_train, y_train) # Train the model
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+plt.figure(figsize=(10, 8))
+# Plotting our two-features-space
+sns.scatterplot(x=X_train[:, 0], y=X_train[:, 1], hue=y_train, s = 30, palette={0: 'red', 1: 'green'}
+
+# Constructing a hyperplane using a formula.
+w = model.coef_[0]           # w consists of 2 elements
+b = model.intercept_[0]      # b consists of 1 element
+x_points = np.linspace(-1, 1)    # generating x-points from -1 to 1
+y_points = -(w[0] / w[1]) * x_points - b / w[1]  # getting corresponding y-points
+# Plotting a red hyperplane
+plt.plot(x_points, y_points, c='b')
+
+# predict the train data set
+y_train_pred = model.predict(X_train)
+
+# calculate the training error
+from sklearn.metrics import accuracy_score
+accuracy_score(y_train, y_train_pred)
+
+# testing error
+y_test_pred = model.predict(X_test)
+accuracy_score(y_test, y_test_pred)
+model_p = SVC(kernel="poly")
+model_p.fit(X_train, y_train) # Train the model
+# predict the train data set
+y_train_pred_p = model_p.predict(X_train)
+
+# calculate the training error
+from sklearn.metrics import accuracy_score
+accuracy_score(y_train, y_train_pred_p)
+plt.figure(figsize=(10, 8))
+
+# Plotting our two-features-space
+sns.scatterplot(x=X_train[:, 0], y=X_train[:, 1], hue=y_train, s=30, palette={0: 'red', 1: 'green'})
+
+# For polynomial kernel, plotting decision boundary is more complex
+# We can create a meshgrid of points and classify them
+xx, yy = np.meshgrid(np.linspace(X_train[:, 0].min() - 1, X_train[:, 0].max() + 1, 100),
+                     np.linspace(X_train[:, 1].min() - 1, X_train[:, 1].max() + 1, 100))
+
+# Create a dummy array with mean values for the remaining features
+X_train_mean = np.mean(X_train[:, 2:], axis=0)
+dummy_features = np.tile(X_train_mean, (xx.size, 1))
+
+# Combine the meshgrid with the dummy features
+meshgrid_features = np.c_[xx.ravel(), yy.ravel(), dummy_features]
+Z = model_p.predict(meshgrid_features)
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, alpha=0.3)
+plt.title('Polynomial Kernel Decision Boundary')
+plt.xlabel('Feature 1 (Scaled)')
+plt.ylabel('Feature 2 (Scaled)')
+plt.show()
+model_s = SVC(kernel="sigmoid")
+model_s.fit(X_train, y_train) # Train the model
+
+# predict the train data set
+y_train_pred_s = model_s.predict(X_train)
+# calculate the training error
+from sklearn.metrics import accuracy_score
+accuracy_score(y_train, y_train_pred_s)
+plt.figure(figsize=(10, 8))
+
+# Plotting our two-features-space
+sns.scatterplot(x=X_train[:, 0], y=X_train[:, 1], hue=y_train, s=30, palette={0: 'red', 1: 'green'})
+
+# Create a meshgrid of points and classify them
+xx, yy = np.meshgrid(np.linspace(X_train[:, 0].min() - 1, X_train[:, 0].max() + 1, 100),
+                     np.linspace(X_train[:, 1].min() - 1, X_train[:, 1].max() + 1, 100))
+
+# Create a dummy array with mean values for the remaining features
+X_train_mean = np.mean(X_train[:, 2:], axis=0)
+dummy_features = np.tile(X_train_mean, (xx.size, 1))
+# Combine the meshgrid with the dummy features
+meshgrid_features = np.c_[xx.ravel(), yy.ravel(), dummy_features]
+Z = model_s.predict(meshgrid_features)
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, alpha=0.3)
+plt.title('Sigmoid Kernel Decision Boundary')
+plt.xlabel('Feature 1 (Scaled)')
+plt.ylabel('Feature 2 (Scaled)')
+plt.show()
+
+model_r = SVC(kernel="rbf")
+model_r.fit(X_train, y_train) # Train the model
+# predict the train data set
+y_train_pred_r = model_r.predict(X_train)
+# calculate the training error
+from sklearn.metrics import accuracy_score
+accuracy_score(y_train, y_train_pred_r)
+plt.figure(figsize=(10, 8))
+# Plotting our two-features-space
+sns.scatterplot(x=X_train[:, 0], y=X_train[:, 1], hue=y_train, s=30, palette={0: 'red', 1: 'green'})
+# Create a meshgrid of points and classify them
+xx, yy = np.meshgrid(np.linspace(X_train[:, 0].min() - 1, X_train[:, 0].max() + 1, 100),
+                     np.linspace(X_train[:, 1].min() - 1, X_train[:, 1].max() + 1, 100))
+
+# Create a dummy array with mean values for the remaining features
+X_train_mean = np.mean(X_train[:, 2:], axis=0)
+dummy_features = np.tile(X_train_mean, (xx.size, 1))
+# Combine the meshgrid with the dummy features
+meshgrid_features = np.c_[xx.ravel(), yy.ravel(), dummy_features]
+Z = model_r.predict(meshgrid_features)
+Z = Z.reshape(xx.shape)
+plt.contourf(xx, yy, Z, alpha=0.3)
+plt.title('RBF Kernel Decision Boundary')
+plt.xlabel('Feature 1 (Scaled)')
+plt.ylabel('Feature 2 (Scaled)')
+plt.show()
+
+# defining parameter grid
+param_grid = {'C': [0.1, 1, 10, 100],'gamma': [0.001, 0.01, 0.1, 1, 10], 'kernel': ['linear', 'rbf', 'poly', 'sigmoid']}
+# Initialize the SVM model
+svm = SVC()
+
+# use GridSearchCV
+grid_search = GridSearchCV(estimator=svm, param_grid=param_grid, cv=5, n_jobs=-1)
+
+# Fit GridSearchCV
+grid_search.fit(X_train, y_train)
+
+# Print the best parameters
+print(f"Best Parameters: {grid_search.best_params_}")
+
+# Predict on the test set using the best model
+y_pred = grid_search.predict(X_test)
+
+# Print classification report and accuracy
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+print(f"Accuracy: {accuracy_score(y_test, y_pred)}")
