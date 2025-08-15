@@ -1,0 +1,75 @@
+#Bayesian
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import silhouette_score
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+data = pd.read_csv("/content/Mall_Customers.csv")
+print(data)
+
+df = pd.DataFrame(data)
+print(df)
+
+df.info()
+df.describe()
+df.head()
+df.tail()
+df.isna().sum()
+df.isnull().sum()
+df.shape
+
+import matplotlib.pyplot as plt
+import io
+
+# Binning the 'Spending Score (1-100)' feature
+# The bins are automatically determined to be of equal width.
+df['spending_bin'] = pd.cut(df['Spending Score (1-100)'], bins=3, labels=['low', 'medium', 'high'])
+
+# Calculating prior probabilities of the 'Genre'
+p_female = (df['Genre'] == 'Female').mean()
+p_male = (df['Genre'] == 'Male').mean()
+
+# Function to calculate and plot posterior probabilities
+def calculate_and_plot_posteriors(bin_label):
+    # Likelihoods
+    p_bin_given_female = len(df[(df['spending_bin'] == bin_label) & (df['Genre'] == 'Female')]) / len(df[df['Genre'] == 'Female'])
+    p_bin_given_male = len(df[(df['spending_bin'] == bin_label) & (df['Genre'] == 'Male')]) / len(df[df['Genre'] == 'Male'])
+    p_bin = (df['spending_bin'] == bin_label).mean()
+
+    # Posterior probabilities using Bayes' Theorem
+    p_female_given_bin = (p_bin_given_female * p_female) / p_bin if p_bin > 0 else 0
+    p_male_given_bin = (p_bin_given_male * p_male) / p_bin if p_bin > 0 else 0
+
+    print(f"\nGiven Spending Score is '{bin_label}':")
+    print(f"  → P(Female) = {p_female_given_bin:.3f}")
+    print(f"  → P(Male)   = {p_male_given_bin:.3f}")
+
+    # Plot the posterior probabilities
+    labels = ['Female', 'Male']
+    values = [p_female_given_bin, p_male_given_bin]
+    colors = ['pink', 'blue']
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    bars = ax.bar(labels, values, color=colors)
+    ax.set_ylim(0, 1)
+    ax.set_title(f"Posterior Probabilities for '{bin_label.capitalize()}' Spending Score")
+    ax.set_ylabel("Probability")
+
+    # Add labels on top of the bars
+    for bar in bars:
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, yval + 0.02, f'{yval:.2f}', ha='center', fontsize=12)
+
+    plt.tight_layout()
+    plt.savefig(f'{bin_label}_spending_posterior.png')
+    plt.close() # Close the figure to prevent display issues in a non-interactive environment
+
+# Demonstrate the calculations and plots for all three bins
+bins_to_analyze = ['low', 'medium', 'high']
+for bin_label in bins_to_analyze:
+    calculate_and_plot_posteriors(bin_label)
+
