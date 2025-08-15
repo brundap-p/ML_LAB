@@ -1,0 +1,117 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, accuracy_score
+
+# Load data
+data = pd.read_csv("/content/bank-additional-full.csv", sep=';')
+df = pd.DataFrame(data)
+
+# Data inspection
+print("DataFrame Info:")
+df.info()
+print("\nDataFrame Head:")
+print(df.head())
+print("\nDataFrame Tail:")
+print(df.tail())
+print("\nDataFrame Description:")
+print(df.describe())
+print("\nMissing values (isna):")
+print(df.isna().sum())
+print("\nMissing values (isnull):")
+print(df.isnull().sum())
+print("\nNumber of duplicated rows:")
+print(df.duplicated().sum())
+
+# Data cleaning 
+df.dropna()
+
+# Check duplicated rows (again)
+print("\nDuplicated rows boolean series:")
+print(df.duplicated())
+
+# Strip whitespace from column names
+df.columns = df.columns.str.strip()
+print("\nColumns after stripping whitespace:")
+print(df.columns)
+
+# DataFrame shape
+print("\nDataFrame shape:", df.shape)
+
+# Map 'yes'/'no' in 'y' column to 1/0
+df['y'] = df['y'].map({'yes': 1, 'no': 0})
+print("\nValue counts for 'y' column:")
+print(df['y'].value_counts())
+
+# Print the DataFrame with mapped 'y' values
+print("\nDataFrame with mapped 'y' column:")
+print(df)
+
+# Correlation Heatmap (Numerical Features)
+plt.figure(figsize=(8, 10))
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Heatmap of Numerical Features')
+plt.show()
+
+# Confusion Matrix (requires y_test and y_pred from the model evaluation step)
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(4, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
+            xticklabels=[0, 1], yticklabels=[0, 1]) # Using 0 and 1 as tick labels based on mapping
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix for Logistic Regression')
+plt.show()
+
+
+# Prepare data for modeling
+X = df.drop('y', axis=1)
+y = df['y'].astype('category') # Convert 'y' to categorical type
+
+X = pd.get_dummies(X, columns=X.select_dtypes(include='object').columns)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+print("\nTraining and testing data shapes:")
+print("X_train shape:", X_train.shape)
+print("X_test shape:", X_test.shape)
+print("y_train shape:", y_train.shape)
+print("y_test shape:", y_test.shape)
+
+# Logistic Regression Model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Make predictions and evaluate accuracy
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print("\nModel Accuracy:", accuracy)
+
+# Evaluate accuracy across different thresholds
+y_probs = model.predict_proba(X_test)[:, 1]
+thresholds = np.arange(0.1, 1.0, 0.05)
+accuracies = []
+
+print("\nAccuracy at different thresholds:")
+for thresh in thresholds:
+    y_pred_thresh = (y_probs >= thresh).astype(int)
+    acc = accuracy_score(y_test, y_pred_thresh)
+    accuracies.append(acc)
+    print(f"Threshold: {thresh:.1f} → Accuracy: {acc:.4f}")
+
+# Plot Sigmoid Function
+z = np.linspace(-10, 10, 300)
+sigmoid = 1 / (1 + np.exp(-z))
+
+plt.figure(figsize=(8, 5))
+plt.plot(z, sigmoid, color='red', linewidth=2, label='Sigmoid Curve')
+plt.axhline(0.5, color='blue', linestyle='--', label='Threshold = 0.5')
+plt.title("Sigmoid Function with Threshold")
+plt.xlabel("z")
+plt.ylabel("Sigmoid(z)")
+plt.legend()
+plt.grid(True)
+plt.show()
